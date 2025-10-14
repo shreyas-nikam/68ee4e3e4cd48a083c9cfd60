@@ -1,44 +1,132 @@
 import pytest
-import pandas as pd
-import matplotlib.pyplot as plt
-from definition_fe424b7818624edd8720f86e396fc09d import plot_score_relationships_scatter
+from definition_87a7115f1e694c37b8ab19c17772a3dc import initialize_petri_components
+from unittest.mock import MagicMock
 
-def test_plot_score_relationships_scatter_valid_data():
-    data = {'x': [1, 2, 3, 4, 5], 'y': [2, 4, 1, 3, 5]}
-    df = pd.DataFrame(data)
-    try:
-        plot_score_relationships_scatter(df, 'x', 'y', 'Test Plot', 'X-axis', 'Y-axis')
-    except Exception as e:
-        assert False, f"Unexpected exception: {e}"
-    plt.close()
+@pytest.fixture
+def mock_get_model():
+    return MagicMock()
 
-def test_plot_score_relationships_scatter_empty_dataframe():
-    df = pd.DataFrame()
-    try:
-        plot_score_relationships_scatter(df, 'x', 'y', 'Test Plot', 'X-axis', 'Y-axis')
-    except KeyError:
-        pass  # Expected behavior: no plot is generated
-    plt.close()
+@pytest.fixture
+def mock_alignment_judge():
+    return MagicMock()
 
-def test_plot_score_relationships_scatter_missing_columns():
-    data = {'a': [1, 2, 3], 'b': [4, 5, 6]}
-    df = pd.DataFrame(data)
-    with pytest.raises(KeyError):
-        plot_score_relationships_scatter(df, 'x', 'y', 'Test Plot', 'X-axis', 'Y-axis')
-    plt.close()
+def test_initialize_petri_components_success(mock_get_model, mock_alignment_judge):
+    auditor_name = "auditor"
+    target_name = "target"
+    judge_name = "judge"
+    custom_dimensions = {"dim1": "desc1"}
 
-def test_plot_score_relationships_scatter_non_numeric_data():
-    data = {'x': ['a', 'b', 'c'], 'y': ['d', 'e', 'f']}
-    df = pd.DataFrame(data)
-    with pytest.raises(TypeError):  # Or ValueError, depending on the implementation
-        plot_score_relationships_scatter(df, 'x', 'y', 'Test Plot', 'X-axis', 'Y-axis')
-    plt.close()
+    mock_auditor_model = MagicMock()
+    mock_target_model = MagicMock()
+    mock_judge_model = MagicMock()
+    mock_scorer = MagicMock()
 
-def test_plot_score_relationships_scatter_single_data_point():
-    data = {'x': [1], 'y': [2]}
-    df = pd.DataFrame(data)
-    try:
-        plot_score_relationships_scatter(df, 'x', 'y', 'Test Plot', 'X-axis', 'Y-axis')
-    except Exception as e:
-        assert False, f"Unexpected exception: {e}"
-    plt.close()
+    mock_get_model.side_effect = [mock_auditor_model, mock_target_model, mock_judge_model]
+    mock_alignment_judge.return_value = mock_scorer
+
+    # Patch the imports inside the function scope
+    import inspect_ai.model
+    import petri.scorers.judge
+    inspect_ai.model.get_model = mock_get_model
+    petri.scorers.judge.alignment_judge = mock_alignment_judge
+
+    auditor, target, judge, scorer = initialize_petri_components(auditor_name, target_name, judge_name, custom_dimensions)
+
+    assert auditor == mock_auditor_model
+    assert target == mock_target_model
+    assert judge == mock_judge_model
+    assert scorer == mock_scorer
+    mock_get_model.assert_called()
+    mock_alignment_judge.assert_called()
+
+def test_initialize_petri_components_empty_dimensions(mock_get_model, mock_alignment_judge):
+    auditor_name = "auditor"
+    target_name = "target"
+    judge_name = "judge"
+    custom_dimensions = {}
+
+    mock_auditor_model = MagicMock()
+    mock_target_model = MagicMock()
+    mock_judge_model = MagicMock()
+    mock_scorer = MagicMock()
+
+    mock_get_model.side_effect = [mock_auditor_model, mock_target_model, mock_judge_model]
+    mock_alignment_judge.return_value = mock_scorer
+
+    # Patch the imports inside the function scope
+    import inspect_ai.model
+    import petri.scorers.judge
+    inspect_ai.model.get_model = mock_get_model
+    petri.scorers.judge.alignment_judge = mock_alignment_judge
+
+    auditor, target, judge, scorer = initialize_petri_components(auditor_name, target_name, judge_name, custom_dimensions)
+
+    assert auditor == mock_auditor_model
+    assert target == mock_target_model
+    assert judge == mock_judge_model
+    assert scorer == mock_scorer
+    mock_get_model.assert_called()
+    mock_alignment_judge.assert_called()
+
+def test_initialize_petri_components_none_dimensions(mock_get_model, mock_alignment_judge):
+    auditor_name = "auditor"
+    target_name = "target"
+    judge_name = "judge"
+    custom_dimensions = None
+
+    mock_auditor_model = MagicMock()
+    mock_target_model = MagicMock()
+    mock_judge_model = MagicMock()
+    mock_scorer = MagicMock()
+
+    mock_get_model.side_effect = [mock_auditor_model, mock_target_model, mock_judge_model]
+    mock_alignment_judge.return_value = mock_scorer
+
+    # Patch the imports inside the function scope
+    import inspect_ai.model
+    import petri.scorers.judge
+    inspect_ai.model.get_model = mock_get_model
+    petri.scorers.judge.alignment_judge = mock_alignment_judge
+
+    auditor, target, judge, scorer = initialize_petri_components(auditor_name, target_name, judge_name, custom_dimensions)
+
+    assert auditor == mock_auditor_model
+    assert target == mock_target_model
+    assert judge == mock_judge_model
+    assert scorer == mock_scorer
+    mock_get_model.assert_called()
+    mock_alignment_judge.assert_called()
+
+def test_initialize_petri_components_invalid_names(mock_get_model, mock_alignment_judge):
+
+    # Patch the imports inside the function scope
+    import inspect_ai.model
+    import petri.scorers.judge
+    inspect_ai.model.get_model = mock_get_model
+    petri.scorers.judge.alignment_judge = mock_alignment_judge
+
+    mock_get_model.side_effect = Exception("Model Not Found")
+    with pytest.raises(Exception, match="Model Not Found"):
+        initialize_petri_components("invalid_auditor", "invalid_target", "invalid_judge", {"dim1": "desc1"})
+
+def test_initialize_petri_components_scorer_exception(mock_get_model, mock_alignment_judge):
+    auditor_name = "auditor"
+    target_name = "target"
+    judge_name = "judge"
+    custom_dimensions = {"dim1": "desc1"}
+
+    mock_auditor_model = MagicMock()
+    mock_target_model = MagicMock()
+    mock_judge_model = MagicMock()
+
+    mock_get_model.side_effect = [mock_auditor_model, mock_target_model, mock_judge_model]
+    mock_alignment_judge.side_effect = Exception("Scorer failed")
+
+    # Patch the imports inside the function scope
+    import inspect_ai.model
+    import petri.scorers.judge
+    inspect_ai.model.get_model = mock_get_model
+    petri.scorers.judge.alignment_judge = mock_alignment_judge
+
+    with pytest.raises(Exception, match="Scorer failed"):
+        initialize_petri_components(auditor_name, target_name, judge_name, custom_dimensions)
