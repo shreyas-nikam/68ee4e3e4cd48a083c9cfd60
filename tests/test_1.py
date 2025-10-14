@@ -1,33 +1,33 @@
 import pytest
-from definition_e08587f2722a45ed854b21f9ab74002c import run_audit_simulation
+from definition_82d130a0e7f542b6b6fec59ee0e5205a import configure_api_keys
+import os
+from unittest.mock import patch
 
-class MockBehavior:
-    def __init__(self, behavior_type="default"):
-        self.behavior_type = behavior_type
+@patch('getpass.getpass', side_effect=['test_anthropic_key', 'test_openai_key'])
+@patch.dict(os.environ, {}, clear=True)
+def test_configure_api_keys_sets_env_vars(mock_getpass, monkeypatch):
+    configure_api_keys()
+    assert os.environ["ANTHROPIC_API_KEY"] == "test_anthropic_key"
+    assert os.environ["OPENAI_API_KEY"] == "test_openai_key"
 
-    def act(self, *args, **kwargs):
-        if self.behavior_type == "error":
-            raise ValueError("Simulated error")
-        return "Response"  # Default response
+@patch('getpass.getpass', side_effect=[EOFError, EOFError])
+@patch.dict(os.environ, {}, clear=True)
+def test_configure_api_keys_handles_eof_error(mock_getpass, monkeypatch):
+    configure_api_keys()
+    assert "ANTHROPIC_API_KEY" not in os.environ
+    assert "OPENAI_API_KEY" not in os.environ
 
-    def score(self, *args, **kwargs):
-        return {"alignment": 3, "safety": 4}  # Default score
+@patch('getpass.getpass', side_effect=['   test_anthropic_key   ', '   test_openai_key   '])
+@patch.dict(os.environ, {}, clear=True)
+def test_configure_api_keys_handles_whitespace(mock_getpass, monkeypatch):
+    configure_api_keys()
+    assert os.environ["ANTHROPIC_API_KEY"] == '   test_anthropic_key   '
+    assert os.environ["OPENAI_API_KEY"] == '   test_openai_key   '
 
-@pytest.mark.parametrize("auditor_behavior, target_behavior, judge_behavior, special_instructions, max_turns, expected_len", [
-    (MockBehavior(), MockBehavior(), MockBehavior(), "Test", 5, 5),
-    (MockBehavior(), MockBehavior(), MockBehavior(), "Test", 1, 1),
-    (MockBehavior(), MockBehavior(), MockBehavior(), "Test", 0, 0),
-    (MockBehavior("error"), MockBehavior(), MockBehavior(), "Test", 5, ValueError), # Simulate an error in auditor's behavior
-    (MockBehavior(), MockBehavior("error"), MockBehavior(), "Test", 5, ValueError), # Simulate an error in target's behavior
+@patch('getpass.getpass', side_effect=['', ''])
+@patch.dict(os.environ, {}, clear=True)
+def test_configure_api_keys_empty_input(mock_getpass, monkeypatch):
+    configure_api_keys()
+    assert "ANTHROPIC_API_KEY" not in os.environ
+    assert "OPENAI_API_KEY" not in os.environ
 
-])
-def test_run_audit_simulation(auditor_behavior, target_behavior, judge_behavior, special_instructions, max_turns, expected_len):
-    try:
-        result = run_audit_simulation(auditor_behavior, target_behavior, judge_behavior, special_instructions, max_turns)
-        if isinstance(expected_len, int):
-            assert len(result) == expected_len
-        else:
-            assert False, "Expected an exception but got a result"
-
-    except Exception as e:
-        assert isinstance(e, expected_len)
