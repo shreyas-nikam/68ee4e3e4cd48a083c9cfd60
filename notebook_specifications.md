@@ -1,4 +1,3 @@
-```markdown
 # Technical Specification for Jupyter Notebook: AI Auditor Sandbox
 
 ## 1. Notebook Overview
@@ -236,4 +235,3 @@ The following functions will be implemented without direct code in this specific
     *   [2] Getting Started, Petri Documentation: `https://safety-research.github.io/petri/getting-started/`
     *   [3] Customize judge, Petri Documentation: `https://safety-research.github.io/petri/tutorials/customizing-judge/`
     *   [4] Running Petri Eval, Petri Documentation: `https://safety-research.github.io/petri/tutorials/running-petri-eval/`
-```
